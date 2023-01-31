@@ -1,6 +1,6 @@
 <template>
   <div class="center">
-    <form>
+    <form @submit.prevent="submitForm">
         <div class="form-group">
             <label for="name">Nome:</label>
             <input type="text" class="form-control" id="name" v-model="name">
@@ -29,6 +29,52 @@
     </form>
   </div>
 </template>
+
+<script>
+import axios from 'axios';
+import Swal from 'sweetalert2';
+
+export default {
+  data() {
+    return {
+      // Dados do formulário
+    };
+  },
+  methods: {
+    async submitForm() {
+      try {
+        const response = await axios.post('http://localhost:5000/api/contact', {
+          name: this.name,
+          email: this.email,
+          phone: this.phone,
+          cpf: this.cpf,
+          address: this.address,
+          message: this.message
+        });
+
+        console.log(response)
+
+        // Exibir mensagem pop-up após o envio bem-sucedido
+        Swal.fire({
+          title: 'Contato Realizado com Sucesso!',
+          text: 'Obrigado por entrar em contato conosco.',
+  icon: 'success'
+}).then(() => {
+  // Limpar os dados do formulário
+  this.name = '';
+  this.email = '';
+  this.phone = '';
+  this.cpf = '';
+  this.address = '';
+  this.message = '';
+});
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+};
+</script>
 
 <style scoped>
 .center {
