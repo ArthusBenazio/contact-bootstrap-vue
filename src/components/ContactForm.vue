@@ -13,9 +13,12 @@
             <label for="phone">Telefone:</label>
             <input type="phone" class="form-control" id="phone" v-model="phone">
         </div>
-        <div class="form-group">
-            <label for="cpf">CPF:</label>
-            <input type="text" class="form-control" id="cpf" v-model="cpf">
+        <div>
+          <label for="cpf">CPF:</label>
+          <input v-model="cpf" type="text" name="cpf" :class="{ 'is-invalid': $v.cpf.$error }">
+        </div>
+         <div v-if="$v.cpf.$error" class="invalid-feedback">
+           CPF inválido
         </div>
         <div class="form-group">
             <label for="address">Endereço:</label>
@@ -25,7 +28,7 @@
             <label for="message" >Mensagem:</label>
             <textarea class="form-control" id="message" v-model="message"></textarea>
         </div>
-        <button class="btn btn-primary">Enviar</button>
+        <button type="submit" :disabled="$v.$invalid">Enviar</button>
     </form>
   </div>
 </template>
@@ -33,13 +36,47 @@
 <script>
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { required, minLength, email } from 'vuelidate/lib/validators';
+
+function validateCPF(cpf) {
+  cpf = cpf.replace(/[^\d]+/g, '');
+
+  if (cpf.length !== 11 || /^(.)\1+$/.test(cpf)) {
+    return false;
+  }
+
+  const digits = cpf.split('').map(d => parseInt(d, 10));
+  const [firstDigit, secondDigit] = [9, 10].map((weight, index) => {
+    let digit = 0;
+    for (let i = 0; i < weight; i++) {
+      digit += digits[i] * (weight + 1 - i);
+    }
+    digit = (digit * 10) % 11;
+    return digit === 10 || digit === 11 ? 0 : digit;
+  });
+
+  return firstDigit === digits[9] && secondDigit === digits[10];
+}
 
 export default {
   data() {
     return {
-      // Dados do formulário
+      cpf: ''
     };
   },
+
+  validations: {
+    cpf: {
+      custom: value => validateCPF(value),
+      required
+    },
+    email: {
+      required,
+      email,
+      minLength: minLength(5)
+    }
+  },
+
   methods: {
     async submitForm() {
       try {
@@ -52,22 +89,20 @@ export default {
           message: this.message
         });
 
-        console.log(response)
+        console.log(response);
 
-        // Exibir mensagem pop-up após o envio bem-sucedido
         Swal.fire({
           title: 'Contato Realizado com Sucesso!',
           text: 'Obrigado por entrar em contato conosco.',
-  icon: 'success'
-}).then(() => {
-  // Limpar os dados do formulário
-  this.name = '';
-  this.email = '';
-  this.phone = '';
-  this.cpf = '';
-  this.address = '';
-  this.message = '';
-});
+          icon: 'success'
+        }).then(() => {
+          this.name = '';
+          this.email = '';
+          this.phone = '';
+          this.cpf = '';
+          this.address = '';
+          this.message = '';
+        });
       } catch (error) {
         console.error(error);
       }
@@ -82,9 +117,10 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 500px;
-    width: 80%;
+    max-width: 800px;
+    width: 100%;
     padding: 20px;
+    
 }
 input, textarea {
   border: 1px solid #ddd;
@@ -92,6 +128,7 @@ input, textarea {
   padding: 10px;
   box-sizing: border-box;
 }
+
 form {
   box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
   margin: 20px;
@@ -111,6 +148,44 @@ button:hover {
 
 body, input, textarea, button {
   font-family: 'Open Sans', sans-serif;
+}
+
+.form-group label {
+    display: block;
+    text-align: left;
+  }
+  @media (max-width: 480px) {
+    .center {
+    top: 80%
+    }
+    button {
+    width: 72%;
+  }
+    }
+  @media (min-width: 576px) {
+      .form-group {
+      display: inline-block;
+      width: calc(50% - 20px);
+      margin-right: 20px;
+      vertical-align: top;
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+  .center {
+    width: 90%;
+    padding: 10px;
+    }
+  input, textarea {
+    font-size: 14px;
+  }
+  label {
+    font-size: 16px;
+  }
+  button {
+    font-size: 16px;
+    width: 90%;
+  }
 }
 
 
