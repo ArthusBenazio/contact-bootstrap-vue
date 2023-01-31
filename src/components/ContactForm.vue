@@ -13,12 +13,9 @@
             <label for="phone">Telefone:</label>
             <input type="phone" class="form-control" id="phone" v-model="phone">
         </div>
-        <div>
-          <label for="cpf">CPF:</label>
-          <input v-model="cpf" type="text" name="cpf" :class="{ 'is-invalid': $v.cpf.$error }">
-        </div>
-         <div v-if="$v.cpf.$error" class="invalid-feedback">
-           CPF inválido
+        <div class="form-group">
+            <label for="cpf">CPF:</label>
+            <input type="text" class="form-control" id="cpf" v-model="cpf">
         </div>
         <div class="form-group">
             <label for="address">Endereço:</label>
@@ -28,7 +25,7 @@
             <label for="message" >Mensagem:</label>
             <textarea class="form-control" id="message" v-model="message"></textarea>
         </div>
-        <button type="submit" :disabled="$v.$invalid">Enviar</button>
+        <button class="btn btn-primary">Enviar</button>
     </form>
   </div>
 </template>
@@ -39,24 +36,43 @@ import Swal from 'sweetalert2';
 import { required, minLength, email } from 'vuelidate/lib/validators';
 
 function validateCPF(cpf) {
-  cpf = cpf.replace(/[^\d]+/g, '');
+  cpf = cpf.replace(/[^\d]+/g, '')
 
-  if (cpf.length !== 11 || /^(.)\1+$/.test(cpf)) {
-    return false;
+  if (cpf.length !== 11) {
+    return false
   }
 
-  const digits = cpf.split('').map(d => parseInt(d, 10));
-  const [firstDigit, secondDigit] = [9, 10].map((weight, index) => {
-    let digit = 0;
-    for (let i = 0; i < weight; i++) {
-      digit += digits[i] * (weight + 1 - i);
-    }
-    digit = (digit * 10) % 11;
-    return digit === 10 || digit === 11 ? 0 : digit;
-  });
+  if (/^(.)\1+$/.test(cpf)) {
+    return false
+  }
 
-  return firstDigit === digits[9] && secondDigit === digits[10];
+  let firstDigit = 0
+  for (let i = 0; i < 9; i++) {
+    firstDigit += parseInt(cpf.charAt(i)) * (10 - i)
+  }
+  firstDigit = (firstDigit * 10) % 11
+  if (firstDigit === 10 || firstDigit === 11) {
+    firstDigit = 0
+  }
+  if (firstDigit !== parseInt(cpf.charAt(9))) {
+    return false
+  }
+
+  let secondDigit = 0
+  for (let i = 0; i < 10; i++) {
+    secondDigit += parseInt(cpf.charAt(i)) * (11 - i)
+  }
+  secondDigit = (secondDigit * 10) % 11
+  if (secondDigit === 10 || secondDigit === 11) {
+    secondDigit = 0
+  }
+  if (secondDigit !== parseInt(cpf.charAt(10))) {
+    return false
+  }
+
+  return true
 }
+
 
 export default {
   data() {
@@ -66,15 +82,27 @@ export default {
   },
 
   validations: {
-    cpf: {
-      custom: value => validateCPF(value),
+    name: {
       required
+    },
+    cpf: {
+      required,
+      custom: value => validateCPF(value)
     },
     email: {
       required,
       email,
       minLength: minLength(5)
-    }
+    },
+    phone: {
+      required,
+    },
+    address: {
+      required
+    },
+    message: {
+      required
+    },
   },
 
   methods: {
@@ -89,20 +117,20 @@ export default {
           message: this.message
         });
 
-        console.log(response);
+        console.log(response)
 
         Swal.fire({
           title: 'Contato Realizado com Sucesso!',
           text: 'Obrigado por entrar em contato conosco.',
-          icon: 'success'
-        }).then(() => {
-          this.name = '';
-          this.email = '';
-          this.phone = '';
-          this.cpf = '';
-          this.address = '';
-          this.message = '';
-        });
+  icon: 'success'
+}).then(() => {
+  this.name = '';
+  this.email = '';
+  this.phone = '';
+  this.cpf = '';
+  this.address = '';
+  this.message = '';
+});
       } catch (error) {
         console.error(error);
       }
